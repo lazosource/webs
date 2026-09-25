@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  --background: #05070a;
+  --background-elevated: #0a0f14;
+  --foreground: #e6f1ef;
+  --muted: #7c9490;
+  --surface: #0d1418;
+  --surface-border: #1c2a2e;
+  --primary: #34e0a1;
+  --primary-foreground: #04120c;
+  --secondary: #22d3ee;
+  --danger: #fb7185;
+  --warning: #fbbf24;
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-elevated: var(--background-elevated);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  --color-surface-border: var(--surface-border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+* {
+  border-color: var(--surface-border);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(52, 224, 161, 0.08), transparent 40%),
+    radial-gradient(circle at 85% 15%, rgba(34, 211, 238, 0.07), transparent 45%),
+    linear-gradient(var(--background), var(--background));
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(52, 224, 161, 0.3);
+  color: var(--foreground);
+}
+
+.font-display {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  letter-spacing: -0.01em;
+}
+
+.text-glow {
+  text-shadow: 0 0 18px rgba(52, 224, 161, 0.35);
+}
+
+.grid-fade {
+  background-image:
+    linear-gradient(to right, rgba(124, 148, 144, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(124, 148, 144, 0.06) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+/* Shared round-timer bar used by several mini-games. */
+@keyframes shrink-x {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-border) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
