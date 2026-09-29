@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CyberShield | Cyber Security & About Me</title>
+<style>
+  :root { --bg:#0a0f0d; --panel:#111a16; --green:#00ff9c; --text:#c9d6cf; --muted:#7f948a; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html { scroll-behavior:smooth; }
+  body { font-family:"Courier New",monospace; background:var(--bg); color:var(--text); line-height:1.6; }
+  a { color:var(--green); text-decoration:none; }
+  header { position:sticky; top:0; z-index:10; display:flex; justify-content:space-between; align-items:center;
+    padding:14px 5%; background:rgba(10,15,13,.95); border-bottom:1px solid #1d2b25; }
+  .logo { color:var(--green); font-weight:bold; font-size:1.2rem; }
+  nav a { margin-left:20px; color:var(--text); }
+  nav a:hover { color:var(--green); }
+  section { padding:80px 5%; max-width:1000px; margin:auto; }
+  h2 { color:var(--green); font-size:1.8rem; margin-bottom:24px; }
+  h2::before { content:"> "; }
+  .hero { min-height:80vh; display:flex; flex-direction:column; justify-content:center; }
+  .hero h1 { font-size:clamp(2rem,6vw,3.5rem); color:#fff; }
+  .hero h1 span { color:var(--green); }
+  .hero p { margin:20px 0; max-width:600px; color:var(--muted); }
+  .cursor { display:inline-block; width:10px; height:1.1em; background:var(--green); vertical-align:middle; animation:blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0; } }
+  .btn { display:inline-block; padding:12px 26px; border:1px solid var(--green); color:var(--green); border-radius:4px; transition:.2s; }
+  .btn:hover { background:var(--green); color:#000; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:20px; }
+  .card { background:var(--panel); border:1px solid #1d2b25; border-radius:8px; padding:22px; transition:.2s; }
+  .card:hover { border-color:var(--green); transform:translateY(-4px); }
+  .card h3 { color:#fff; margin-bottom:8px; }
+  .card p { color:var(--muted); font-size:.95rem; }
+  ul.tips { list-style:none; }
+  ul.tips li { padding:10px 0; border-bottom:1px solid #1d2b25; }
+  ul.tips li::before { content:"[+] "; color:var(--green); }
+  .about { display:grid; grid-template-columns:1fr 2fr; gap:30px; align-items:center; }
+  .avatar { width:100%; aspect-ratio:1; max-width:240px; border:2px solid var(--green); border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:4rem; color:var(--green); background:var(--panel); margin:auto; }
+  .skills span { display:inline-block; margin:4px 6px 0 0; padding:4px 12px; border:1px solid #1d2b25; border-radius:20px; font-size:.85rem; color:var(--green); }
+  form { display:grid; gap:14px; }
+  input, textarea { width:100%; padding:12px; background:var(--panel); border:1px solid #1d2b25; color:var(--text); font-family:inherit; border-radius:4px; }
+  input:focus, textarea:focus { outline:none; border-color:var(--green); }
+  button { cursor:pointer; background:transparent; font-family:inherit; font-size:1rem; }
+  footer { text-align:center; padding:30px; color:var(--muted); border-top:1px solid #1d2b25; font-size:.9rem; }
+  @media(max-width:700px){ .about{grid-template-columns:1fr;} nav a{margin-left:12px;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">&lt;CyberShield/&gt;</div>
+  <nav>
+    <a href="#home">Home</a>
+    <a href="#topics">Topics</a>
+    <a href="#tips">Tips</a>
+    <a href="#about">About Me</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<section id="home" class="hero">
+  <h1>Stay Safe in the <span>Digital World</span><span class="cursor"></span></h1>
+  <p>Learn how to protect your data, spot threats, and build strong security habits. Knowledge is the best firewall.</p>
+  <div><a class="btn" href="#topics">Start Learning</a></div>
+</section>
+
+<section id="topics">
+  <h2>Security Topics</h2>
+  <div class="grid">
+    <div class="card"><h3>🎣 Phishing</h3><p>Fake emails and messages that trick you into giving up passwords or money.</p></div>
+    <div class="card"><h3>🦠 Malware</h3><p>Viruses, ransomware, and spyware designed to damage or steal from your devices.</p></div>
+    <div class="card"><h3>🔐 Encryption</h3><p>Scrambling data so only authorized people can read it.</p></div>
+    <div class="card"><h3>🌐 Network Security</h3><p>Firewalls, VPNs, and safe Wi-Fi practices to protect your traffic.</p></div>
+    <div class="card"><h3>🕵️ Social Engineering</h3><p>Manipulating people, not machines, to break security.</p></div>
+    <div class="card"><h3>🧪 Ethical Hacking</h3><p>Legally testing systems to find weaknesses before criminals do.</p></div>
+  </div>
+</section>
+
+<section id="tips">
+  <h2>Quick Safety Tips</h2>
+  <ul class="tips">
+    <li>Use long, unique passwords and a password manager.</li>
+    <li>Turn on two-factor authentication (2FA) everywhere.</li>
+    <li>Keep your system and apps updated.</li>
+    <li>Never click suspicious links or open unknown attachments.</li>
+    <li>Back up your important files regularly.</li>
+    <li>Avoid public Wi-Fi for sensitive activity, or use a VPN.</li>
+  </ul>
+</section>
+
+<section id="about">
+  <h2>About Me</h2>
+  <div class="about">
+    <div class="avatar">👤</div>
+    <div>
+      <h3 style="color:#fff">Hi, I'm [Your Name]</h3>
+      <p style="margin:10px 0">I'm a cyber security enthusiast passionate about protecting people and systems online. I enjoy learning how attacks work so I can help defend against them. Replace this text with your own story.</p>
+      <div class="skills">
+        <span>Network Security</span><span>Linux</span><span>Python</span>
+        <span>Pen Testing</span><span>Wireshark</span><span>CTFs</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <h2>Contact</h2>
+  <form onsubmit="event.preventDefault(); alert('Thanks! Message noted (demo form - no server).'); this.reset();">
+    <input type="text" placeholder="Your name" required>
+    <input type="email" placeholder="Your email" required>
+    <textarea rows="5" placeholder="Your message" required></textarea>
+    <button class="btn" type="submit">Send Message</button>
+  </form>
+</section>
+
+<footer>© 2026 CyberShield · Made by [Your Name] · Stay secure 🔒</footer>
+
+</body>
+</html>
