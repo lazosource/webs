@@ -1,0 +1,231 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src https://static-cdn.jtvnw.net; connect-src wss://irc-ws.chat.twitch.tv; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+<title>LAZO Chat</title>
+<style>
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none; }
+  body {
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    font-size: var(--size, 20px);
+    color: #fff;
+  }
+  #chat {
+    position: absolute; left: 0; right: 0; bottom: 0; top: 0;
+    padding: 8px;
+    display: flex; flex-direction: column; justify-content: flex-end; gap: 5px;
+  }
+  .msg {
+    background: rgba(0, 0, 0, var(--bg, .75));
+    border-left: 4px solid #fff;
+    padding: 7px 11px;
+    line-height: 1.35;
+    word-wrap: break-word;
+    animation: in .2s ease-out;
+    transition: opacity .5s;
+  }
+  .msg.out { opacity: 0; }
+  .name { font-weight: 800; letter-spacing: .03em; margin-right: 6px; }
+  .name::after { content: ":"; }
+  .text { color: #ddd; }
+  .emote { height: 1.4em; vertical-align: middle; margin: -4px 1px; }
+  .status { opacity: .6; font-size: .7em; letter-spacing: .2em; text-transform: uppercase; }
+  @keyframes in { from { transform: translateX(-12px); opacity: 0; } }
+
+  /* Edit mode */
+  #edit { display: none; }
+  body.editing { outline: 2px dashed #fff; outline-offset: -2px; background: rgba(0, 0, 0, .35); }
+  body.editing #edit { display: block; }
+  body.editing #chat { top: 190px; }
+  #edit {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 2;
+    background: #000; border-bottom: 2px solid #fff;
+    font-size: 13px; padding: 0 0 10px;
+  }
+  .bar {
+    -webkit-app-region: drag; cursor: move;
+    padding: 10px 12px; font-weight: 900; letter-spacing: .18em;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .bar small { font-weight: 500; letter-spacing: .05em; opacity: .6; }
+  .row { display: flex; gap: 8px; align-items: center; padding: 4px 12px; }
+  .row label { width: 92px; opacity: .8; }
+  input[type=text] {
+    flex: 1; background: #111; color: #fff; border: 1px solid #fff; padding: 6px 8px;
+    font: inherit; font-size: 14px; outline: none;
+  }
+  input[type=range] { flex: 1; accent-color: #fff; }
+  .val { width: 38px; text-align: right; opacity: .8; }
+  .buttons { display: flex; gap: 8px; padding: 8px 12px 0; }
+  button {
+    font: inherit; font-weight: 800; letter-spacing: .12em; cursor: pointer;
+    padding: 8px 12px; border: 1px solid #fff; background: #fff; color: #000;
+  }
+  button.ghost { background: #000; color: #fff; }
+  .hint { padding: 6px 12px 0; opacity: .55; font-size: 11px; }
+</style>
+</head>
+<body>
+<div id="edit">
+  <div class="bar">LAZO CHAT <small>drag here to move · drag edges to resize</small></div>
+  <div class="row"><label>Twitch name</label><input id="channel" type="text" placeholder="your twitch name" spellcheck="false"></div>
+  <div class="row"><label>Text size</label><input id="size" type="range" min="12" max="36"><span class="val" id="sizeVal"></span></div>
+  <div class="row"><label>Background</label><input id="bg" type="range" min="0" max="100"><span class="val" id="bgVal"></span></div>
+  <div class="row"><label>Fade after</label><input id="fade" type="range" min="0" max="120" step="5"><span class="val" id="fadeVal"></span></div>
+  <div class="buttons">
+    <button id="save">SAVE &amp; LOCK</button>
+    <button id="quit" class="ghost">QUIT</button>
+  </div>
+  <div class="hint">Ctrl+Shift+L edit · Ctrl+Shift+H hide · Ctrl+Shift+Q quit</div>
+</div>
+<div id="chat"></div>
+
+<script>
+const MAX = 30;
+const chat = document.getElementById('chat');
+const $ = id => document.getElementById(id);
+let cfg = { channel: '', size: 20, bg: 75, fade: 0 };
+let ws, joined = '';
+
+function apply() {
+  document.body.style.setProperty('--size', cfg.size + 'px');
+  document.body.style.setProperty('--bg', cfg.bg / 100);
+  $('sizeVal').textContent = cfg.size;
+  $('bgVal').textContent = cfg.bg + '%';
+  $('fadeVal').textContent = cfg.fade ? cfg.fade + 's' : 'never';
+}
+
+function status(text) {
+  const el = document.createElement('div');
+  el.className = 'msg status';
+  el.textContent = text;
+  add(el);
+}
+
+function add(el) {
+  chat.appendChild(el);
+  while (chat.children.length > MAX) chat.firstChild.remove();
+  if (cfg.fade) setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 600);
+  }, cfg.fade * 1000);
+}
+
+function parseTags(raw) {
+  const tags = {};
+  for (const pair of raw.split(';')) {
+    const i = pair.indexOf('=');
+    tags[pair.slice(0, i)] = pair.slice(i + 1);
+  }
+  return tags;
+}
+
+// Builds the message text, swapping Twitch emote ranges for images.
+function renderText(text, emotes) {
+  const span = document.createElement('span');
+  span.className = 'text';
+  const chars = Array.from(text);
+  const ranges = [];
+  if (emotes) for (const part of emotes.split('/')) {
+    const [id, spots] = part.split(':');
+    for (const spot of spots.split(',')) {
+      const [a, b] = spot.split('-').map(Number);
+      ranges.push({ id, a, b });
+    }
+  }
+  ranges.sort((x, y) => x.a - y.a);
+  let pos = 0;
+  for (const r of ranges) {
+    if (r.a > pos) span.append(chars.slice(pos, r.a).join(''));
+    const img = document.createElement('img');
+    img.className = 'emote';
+    img.src = `https://static-cdn.jtvnw.net/emoticons/v2/${r.id}/default/dark/2.0`;
+    img.alt = chars.slice(r.a, r.b + 1).join('');
+    span.append(img);
+    pos = r.b + 1;
+  }
+  if (pos < chars.length) span.append(chars.slice(pos).join(''));
+  return span;
+}
+
+function onLine(line) {
+  if (line.startsWith('PING')) return ws.send('PONG :tmi.twitch.tv');
+  const m = line.match(/^(?:@(\S+) )?:(\S+?)(?:!\S+)? (\S+) #\S+(?: :(.*))?$/);
+  if (!m) return;
+  const [, rawTags, nick, cmd, body] = m;
+  const tags = rawTags ? parseTags(rawTags) : {};
+
+  if (cmd === 'PRIVMSG') {
+    let text = body || '';
+    const action = text.match(/^\u0001ACTION (.*)\u0001$/);
+    if (action) text = action[1];
+    const el = document.createElement('div');
+    el.className = 'msg';
+    el.dataset.user = nick;
+    el.dataset.id = tags.id || '';
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = tags['display-name'] || nick;
+    el.append(name, renderText(text, tags.emotes));
+    add(el);
+  } else if (cmd === 'CLEARCHAT') {
+    // Timeout/ban removes that user's messages; no user means the whole chat was cleared.
+    for (const el of [...chat.querySelectorAll('.msg')])
+      if (!body || el.dataset.user === body) el.remove();
+  } else if (cmd === 'CLEARMSG') {
+    chat.querySelector(`.msg[data-id="${CSS.escape(tags['target-msg-id'] || '')}"]`)?.remove();
+  }
+}
+
+function connect() {
+  if (!cfg.channel || joined === cfg.channel) return;
+  if (ws) { ws.onclose = null; ws.close(); }
+  joined = cfg.channel;
+  chat.querySelectorAll('.status').forEach(el => el.remove());
+  ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+  ws.onopen = () => {
+    ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+    ws.send('PASS SCHMOOPIIE');
+    ws.send('NICK justinfan' + Math.floor(Math.random() * 90000 + 10000));
+    ws.send('JOIN #' + joined);
+    status('Connected to ' + joined);
+  };
+  ws.onmessage = e => e.data.split('\r\n').filter(Boolean).forEach(onLine);
+  ws.onclose = () => {
+    status('Reconnecting…');
+    const ch = joined;
+    joined = '';
+    setTimeout(() => { if (!joined && cfg.channel === ch) connect(); }, 3000);
+  };
+}
+
+for (const key of ['size', 'bg', 'fade'])
+  $(key).addEventListener('input', e => { cfg[key] = Number(e.target.value); apply(); });
+
+async function save() {
+  cfg.channel = $('channel').value.trim().toLowerCase().replace(/^#/, '').replace(/.*twitch\.tv\//, '');
+  if (!cfg.channel) { $('channel').focus(); return; }
+  cfg = await lazo.saveConfig(cfg);
+  connect();
+  lazo.doneEditing();
+}
+$('save').onclick = save;
+$('channel').addEventListener('keydown', e => { if (e.key === 'Enter') save(); });
+$('quit').onclick = () => lazo.quit();
+
+lazo.onEditMode(on => {
+  document.body.classList.toggle('editing', on);
+  if (on) { $('channel').value = cfg.channel; $('channel').focus(); }
+});
+
+lazo.getConfig().then(saved => {
+  cfg = { ...cfg, ...saved };
+  for (const key of ['size', 'bg', 'fade']) $(key).value = cfg[key];
+  apply();
+  if (cfg.channel) connect();
+  else status('Type your Twitch name above');
+});
+</script>
+</body>
+</html>

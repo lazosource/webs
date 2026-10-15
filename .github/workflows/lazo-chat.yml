@@ -1,0 +1,41 @@
+name: LAZO Chat
+
+# Builds the Windows chat overlay app and attaches it to a GitHub release.
+on:
+  push:
+    paths:
+      - "lazo-chat/**"
+      - ".github/workflows/lazo-chat.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: lazo-chat
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Package
+        run: npx @electron/packager . "LAZO Chat" --platform=win32 --arch=x64 --out=dist --overwrite --asar --icon=icon.ico --ignore="^/dist" --ignore="^/README.txt"
+      - name: Zip
+        shell: pwsh
+        run: |
+          Copy-Item README.txt "dist/LAZO Chat-win32-x64/README.txt"
+          Rename-Item "dist/LAZO Chat-win32-x64" "LAZO Chat"
+          Compress-Archive -Path "dist/LAZO Chat" -DestinationPath LAZO-Chat-Windows.zip
+      - name: Publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="lazo-chat-v$(node -p "require('./package.json').version")"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "LAZO Chat" --notes-file README.txt --target "$GITHUB_SHA"
+          gh release upload "$TAG" LAZO-Chat-Windows.zip --clobber

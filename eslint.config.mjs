@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Standalone Electron app, not part of the Next.js site.
+    "lazo-chat/**",
   ]),
 ]);
 
